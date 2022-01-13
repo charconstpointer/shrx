@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	//foo2
+	//foo3
 	log1 := &Log{
 		Messages: []string{"a", "b", "c"},
 	}
