@@ -4,9 +4,12 @@ import (
 	"fmt"
 	"sync"
 	"time"
+
+	"golang.org/x/sync/errgroup"
 )
 
 func main() {
+	//foo
 	log1 := &Log{
 		Messages: []string{"a", "b", "c"},
 	}
@@ -21,15 +24,21 @@ func main() {
 		index:  1,
 		Stream: log2,
 	}
-	go part1.Run()
-	go part2.Run()
+	var g errgroup.Group
+	g.Go(func() error {
+		return part1.Run()
+	})
+	g.Go(func() error {
+		return part2.Run()
+	})
 	keeper := NewKeeper(part1, part2)
+	keeper2 := NewKeeper(keeper)
 	go func(k *Keeper) {
 		for {
-			k.Write("x")
+			k.Write("y")
 			time.Sleep(time.Millisecond * 10)
 		}
-	}(keeper)
+	}(keeper2)
 	time.Sleep(time.Second * 10)
 }
 
@@ -43,12 +52,12 @@ type MemPart struct {
 	mu     sync.Mutex
 }
 
-func (p *MemPart) Run() string {
+func (p *MemPart) Run() error {
 	for msg := p.Stream.Next(); msg != nil; msg = p.Stream.Next() {
 		fmt.Printf("%d: %s\n", p.index, *msg)
 		time.Sleep(time.Millisecond * 99)
 	}
-	return "done"
+	return nil
 }
 
 func (p *MemPart) Write(msg string) {
